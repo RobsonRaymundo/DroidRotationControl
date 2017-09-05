@@ -58,6 +58,7 @@ public class DroidHeadService extends Service {
         InicializarVariavel();
         InicializarAcao();
         AtualizarPosicao();
+        GravaStatusRotacao();
         Log.d(DroidCommon.TAG, "DroidHeadService - onCreate");
     }
 
@@ -77,6 +78,25 @@ public class DroidHeadService extends Service {
         } catch (Exception ex) {
             Log.d(DroidCommon.TAG, "Vibrar: " + ex.getMessage());
         }
+    }
+
+    private void GravaStatusRotacao()
+    {
+        DroidPreferences.SetInteger(context, "statusRotacao", Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0));
+    }
+
+    private int LerStatusRotacao()
+    {
+        int status = 0;
+        try {
+            status = DroidPreferences.GetInteger(context, "statusRotacao");
+            Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, status);
+        }
+        catch (Exception ex)
+        {
+            Log.d(DroidCommon.TAG, "LerStatusRotacao: " + ex.getMessage());
+        }
+        return status;
     }
 
     private void AtualizarPosicao() {
@@ -159,9 +179,14 @@ public class DroidHeadService extends Service {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 if (StateButton == EnumStateButton.VIEW) {
+                    if (Settings.System.getInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0) == 1)
+                    {
+                        Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+                    }
 
                     if (Settings.System.getInt(getContentResolver(), Settings.System.USER_ROTATION, 0) == 0) {
                         Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, 1);
+
                     } else if (Settings.System.getInt(getContentResolver(), Settings.System.USER_ROTATION, 0) == 1) {
                         Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, 2);
                     } else if (Settings.System.getInt(getContentResolver(), Settings.System.USER_ROTATION, 0) == 2) {
@@ -220,6 +245,8 @@ public class DroidHeadService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        LerStatusRotacao();
+
         if (chatHead != null) windowManager.removeView(chatHead);
         //if (txtHead != null) windowManager.removeView(txtHead);
 
